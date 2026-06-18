@@ -1,0 +1,19 @@
+# YOLO Target Detection System — Default Configuration
+
+model:
+  name: "models/yolov8n.pt"   # 默认模型路径
+  device: "cpu"               # cpu / cuda:0
+
+detection:
+  conf_threshold: 0.5         # 置信度阈值 (0-1)
+  iou_threshold: 0.45         # NMS IOU 阈值
+
+output:
+  save_dir: "outputs"         # 结果保存目录
+  save_json: true             # 是否保存 JSON 结果
+  draw_boxes: true            # 是否绘制检测框
+
+server:
+  host: "0.0.0.0"
+  port: 5000
+  debug: true

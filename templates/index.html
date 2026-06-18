@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 YOLOv8 目标检测系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- ========== 顶栏 ========== -->
+    <header class="header">
+        <div class="header-left">
+            <h1>🎯 目标检测系统</h1>
+            <span class="badge">YOLOv8</span>
+        </div>
+        <div class="header-right">
+            <span id="model-badge" class="model-badge">yolov8n.pt</span>
+            <span id="device-badge" class="device-badge">CPU</span>
+        </div>
+    </header>
+
+    <!-- ========== 主布局 ========== -->
+    <div class="container">
+        <!-- 左侧：控制面板 -->
+        <aside class="sidebar">
+            <div class="panel">
+                <h3>⚙️ 设置</h3>
+
+                <label>模型选择</label>
+                <select id="model-select">
+                    <option value="yolov8n.pt">YOLOv8 Nano (最快)</option>
+                    <option value="yolov8s.pt">YOLOv8 Small</option>
+                    <option value="yolov8m.pt">YOLOv8 Medium</option>
+                    <option value="yolov8l.pt">YOLOv8 Large</option>
+                    <option value="yolov8x.pt">YOLOv8 XLarge (最准)</option>
+                </select>
+
+                <label>置信度阈值: <span id="conf-value">0.50</span></label>
+                <input type="range" id="conf-slider" min="0.1" max="0.9" step="0.05" value="0.5">
+
+                <label>IOU 阈值: <span id="iou-value">0.45</span></label>
+                <input type="range" id="iou-slider" min="0.1" max="0.9" step="0.05" value="0.45">
+
+                <button id="btn-apply" class="btn btn-primary">✓ 应用设置</button>
+            </div>
+
+            <div class="panel" id="stats-panel" style="display:none;">
+                <h3>📊 检测结果</h3>
+                <div id="stats-content"></div>
+            </div>
+        </aside>
+
+        <!-- 右侧：主操作区 -->
+        <main class="main">
+            <!-- Tab 切换 -->
+            <nav class="tabs">
+                <button class="tab active" data-tab="image">🖼️ 图片检测</button>
+                <button class="tab" data-tab="video">🎬 视频检测</button>
+                <button class="tab" data-tab="webcam">📷 实时摄像头</button>
+            </nav>
+
+            <!-- ===== 图片检测 ===== -->
+            <section class="tab-content active" id="tab-image">
+                <div class="upload-area" id="image-upload-area">
+                    <div class="upload-icon">📁</div>
+                    <p>拖拽图片到此处，或 <strong>点击上传</strong></p>
+                    <p class="hint">支持 JPG / PNG / BMP / WebP</p>
+                    <input type="file" id="image-file-input" accept="image/*" hidden>
+                </div>
+
+                <div class="result-row" id="image-results" style="display:none;">
+                    <div class="result-card">
+                        <h4>原始图片</h4>
+                        <img id="original-img" alt="原始图片">
+                    </div>
+                    <div class="result-card">
+                        <h4>检测结果</h4>
+                        <img id="result-img" alt="检测结果">
+                    </div>
+                </div>
+
+                <div class="loading" id="image-loading" style="display:none;">
+                    <div class="spinner"></div>
+                    <p>检测中...</p>
+                </div>
+            </section>
+
+            <!-- ===== 视频检测 ===== -->
+            <section class="tab-content" id="tab-video">
+                <div class="upload-area" id="video-upload-area">
+                    <div class="upload-icon">🎥</div>
+                    <p>拖拽视频到此处，或 <strong>点击上传</strong></p>
+                    <p class="hint">支持 MP4 / AVI / MOV / WebM / MKV (最大 500MB)</p>
+                    <input type="file" id="video-file-input" accept="video/*" hidden>
+                </div>
+
+                <div class="loading" id="video-loading" style="display:none;">
+                    <div class="spinner"></div>
+                    <p>正在逐帧检测，请耐心等待...</p>
+                    <p class="hint" id="video-progress"></p>
+                </div>
+
+                <div class="result-row" id="video-results" style="display:none;">
+                    <div class="result-card full-width">
+                        <h4>检测结果视频</h4>
+                        <video id="result-video" controls width="100%"></video>
+                        <a id="video-download" class="btn btn-primary" download>
+                            💾 下载视频
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== 实时摄像头 ===== -->
+            <section class="tab-content" id="tab-webcam">
+                <div class="webcam-controls">
+                    <button id="btn-webcam-start" class="btn btn-success">▶ 开启摄像头</button>
+                    <button id="btn-webcam-stop" class="btn btn-danger" disabled>⏹ 停止</button>
+                    <span id="webcam-status" class="webcam-status">未启动</span>
+                </div>
+
+                <div class="result-row">
+                    <div class="result-card">
+                        <h4>原始画面</h4>
+                        <video id="webcam-video" autoplay playsinline muted></video>
+                        <canvas id="webcam-canvas" style="display:none;"></canvas>
+                    </div>
+                    <div class="result-card">
+                        <h4>检测画面</h4>
+                        <canvas id="webcam-result-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="webcam-info" id="webcam-info" style="display:none;">
+                    <p><span id="webcam-fps"></span> FPS</p>
+                    <ul id="webcam-detections-list"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========== Toast 提示 ========== -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
